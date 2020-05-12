@@ -1,10 +1,7 @@
 import React, { useRef, useEffect } from 'react';
-import logo from './logo.svg';
 import './App.css';
 import * as THREE from 'three';
-import { Box2, Vector3 } from 'three';
-import { strict } from 'assert';
-import { stringify } from 'querystring';
+import { Vector3 } from 'three';
 
 function randBetween(lo: number, hi: number): number {
   const range = hi - lo + 1;

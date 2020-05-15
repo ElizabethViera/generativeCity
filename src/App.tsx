@@ -29,9 +29,9 @@ function draw(container: HTMLElement) {
   var material = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true });
 
 
-  camera.position.x = -8
-  camera.position.y = 8
-  camera.position.z = 18;
+  camera.position.x = -18
+  camera.position.y = 18
+  camera.position.z = 25;
   camera.rotateOnAxis(new Vector3(0, 1, 0), -Math.PI / 4)
   camera.rotateOnAxis(new Vector3(1, 0, 0), -Math.PI / 4)
 
@@ -72,8 +72,8 @@ function draw(container: HTMLElement) {
   // geometry.vertices = [new THREE.Vector3(-2, 3), new THREE.Vector3(2, -3), new THREE.Vector3(1, 2)]
   // geometry.faces = [new THREE.Face3(0, 1, 2)]
 
-  for (let x = -25; x <= 20; x++) {
-    for (let z = -15; z <= 35; z++) {
+  for (let x = -35; x <= 30; x++) {
+    for (let z = -25; z <= 35; z++) {
       const rr = randBetween(210, 225)
       const rg = randBetween(210, 225)
       const rb = randBetween(210, 225)
@@ -83,14 +83,14 @@ function draw(container: HTMLElement) {
     }
   }
 
-  for (let i = 0; i < 80; i++) {
-    const cx = randBetween(-7, 8);
-    const cz = randBetween(0, 8);
+  for (let i = 0; i < 100; i++) {
+    const cx = randBetween(-30, 30);
+    const cz = randBetween(-30, 30);
     const size = randChoose([1, 1, 1, 1, 1, 3]);
     for (let x = cx - size; x <= cx + size; x++) {
       for (let z = cz - size; z <= cz + size; z++) {
         for (let y = 1; y <= 2 * size + 1; y++) {
-          if ((x === cx || z === cz) && y < size + 1) {
+          if (x <= 3 && x >= -4 || (x === cx || z === cz) && y < size + 1) {
             continue;
           }
           const rr = randBetween(230, 245) + y
@@ -120,11 +120,18 @@ function draw(container: HTMLElement) {
     }
   }
 
+  for (let x = -4; x <= 4; x += 1) {
+    for (let z = -40; z <= 40; z++) {
+      for (let y = -20; y <= 0; y++) {
+        const greyr = randBetween(70, 85)
+        const greyg = randBetween(65, 80)
+        const greyb = randBetween(75, 90)
+        const greyColor = "rgb(" + greyr + ", " + greyg + ", " + greyb + ")"
+        addCube(new THREE.Vector3(x, y, z), { top: new THREE.Color(greyColor) });
+      }
+    }
+  }
 
-  //geometry.vertices = [new THREE.Vector3(-2, 3), new THREE.Vector3(2, -3), new THREE.Vector3(1, 2)]
-  // geometry.faces = [new THREE.Face3(0, 1, 2)]
-
-  console.log(geometry.vertices, geometry.faces)
   scene.add(new THREE.Mesh(geometry, material))
   var animate = function () {
     requestAnimationFrame(animate);

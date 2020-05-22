@@ -15,33 +15,9 @@ function randChoose<T>(options: Array<T>): T {
   return list[Math.floor(Math.random() * list.length)];
 }
 
-function draw(container: HTMLElement) {
+function generateScene() {
 
-
-  var scene = new THREE.Scene();
-  // var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  var camera = new THREE.OrthographicCamera(-10 * window.innerWidth / window.innerHeight, 10 * window.innerWidth / window.innerHeight, 10, -10, 0.1, 1000);
-
-  var light = new THREE.AmbientLight(new Color("#222"))
-  var dirLight = new THREE.DirectionalLight(new Color("#FFF"))
-  dirLight.position.set(0.5, 1, 1)
-  scene.add(light, dirLight)
-  var renderer = new THREE.WebGLRenderer();
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
-
-
-  var geometry = new THREE.Geometry();
-  var material = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true });
-
-
-  camera.position.x = -18
-  camera.position.y = 18
-  camera.position.z = 25;
-  camera.rotateOnAxis(new Vector3(0, 1, 0), -Math.PI / 4)
-  camera.rotateOnAxis(new Vector3(1, 0, 0), -Math.PI / 4)
-
-
+  const geometry = new THREE.Geometry()
   function addCube(pos: THREE.Vector3, { top = new THREE.Color("rgb(255,255,255)"), left = new THREE.Color("rgb(169, 169, 169)"), right = new THREE.Color("rgb(90,0,90)"), top2 }: Partial<Record<"top" | "left" | "right" | "top2", THREE.Color>>) {
     const size = .5;
     const index = geometry.vertices.length;
@@ -137,36 +113,82 @@ function draw(container: HTMLElement) {
       }
     }
   }
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff, vertexColors: true });
+  return new THREE.Mesh(geometry, material)
 
-  scene.add(new THREE.Mesh(geometry, material))
+}
+
+async function draw(container: HTMLElement) {
 
 
-  const ghost_loader = new OBJLoader()
-  ghost_loader.load('/ghost.obj', (ghostguy) => {
-    ghostguy.position.z = 12;
-    ghostguy.position.y = 4;
-    ghostguy.rotateOnAxis(new Vector3(0, 1, 0), + Math.PI);
-    let objectCount = 0
-    ghostguy.traverse((obj) => {
-      if (obj instanceof THREE.Mesh) {
-        objectCount += 1
-        obj.geometry.computeVertexNormals();
-        obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
-        if (objectCount == 3) {
-          obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
-        }
-        if (objectCount == 2) {
-          obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
-        }
-      }
-    })
+  var scene = new THREE.Scene();
+  // var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  var camera = new THREE.OrthographicCamera(-10 * window.innerWidth / window.innerHeight, 10 * window.innerWidth / window.innerHeight, 10, -10, 0.1, 1000);
 
-    scene.add(ghostguy)
+  var light = new THREE.AmbientLight(new Color("#222"))
+  var dirLight = new THREE.DirectionalLight(new Color("#FFF"))
+  dirLight.position.set(0.5, 1, 1)
+  scene.add(light, dirLight)
+  var renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+
+
+
+
+  camera.position.x = -18
+  camera.position.y = 18
+  camera.position.z = 25;
+  camera.rotateOnAxis(new Vector3(0, 1, 0), -Math.PI / 4)
+  camera.rotateOnAxis(new Vector3(1, 0, 0), -Math.PI / 4)
+
+
+
+
+
+
+
+  const ghostguy = await new Promise<THREE.Group>((resolve) => {
+    const ghost_loader = new OBJLoader()
+    ghost_loader.load('/ghost.obj', resolve);
   })
+
+  let objectCount = 0
+  ghostguy.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      objectCount += 1
+      obj.geometry.computeVertexNormals();
+      obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
+      if (objectCount == 3) {
+        obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
+      }
+      if (objectCount == 2) {
+        obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
+      }
+    }
+  })
+
+  scene.add(ghostguy)
+  let city = generateScene()
+  scene.add(city)
+
+
+  let t = 0
 
   var animate = function () {
     requestAnimationFrame(animate);
 
+    t += 0.1
+    ghostguy.position.y = 4 + 0.4 * (Math.cos(t))
+    ghostguy.position.z = t
+    ghostguy.setRotationFromEuler(new THREE.Euler(0, Math.PI, 0.04 * Math.cos(t * .8)))
+    if (t > 40) {
+      t = 0
+      scene.remove(city)
+      city = generateScene()
+      scene.add(city)
+    }
 
     renderer.render(scene, camera);
   };

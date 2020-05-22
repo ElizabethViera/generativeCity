@@ -1,7 +1,9 @@
 import React, { useRef, useEffect } from 'react';
 import './App.css';
 import * as THREE from 'three';
-import { Vector3 } from 'three';
+import { Vector3, BufferGeometry, VertexColors, Color } from 'three';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
+
 
 function randBetween(lo: number, hi: number): number {
   const range = hi - lo + 1;
@@ -20,6 +22,10 @@ function draw(container: HTMLElement) {
   // var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
   var camera = new THREE.OrthographicCamera(-10 * window.innerWidth / window.innerHeight, 10 * window.innerWidth / window.innerHeight, 10, -10, 0.1, 1000);
 
+  var light = new THREE.AmbientLight(new Color("#222"))
+  var dirLight = new THREE.DirectionalLight(new Color("#FFF"))
+  dirLight.position.set(0.5, 1, 1)
+  scene.add(light, dirLight)
   var renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
@@ -133,6 +139,31 @@ function draw(container: HTMLElement) {
   }
 
   scene.add(new THREE.Mesh(geometry, material))
+
+
+  const ghost_loader = new OBJLoader()
+  ghost_loader.load('/ghost.obj', (ghostguy) => {
+    ghostguy.position.z = 12;
+    ghostguy.position.y = 4;
+    ghostguy.rotateOnAxis(new Vector3(0, 1, 0), + Math.PI);
+    let objectCount = 0
+    ghostguy.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        objectCount += 1
+        obj.geometry.computeVertexNormals();
+        obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
+        if (objectCount == 3) {
+          obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
+        }
+        if (objectCount == 2) {
+          obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
+        }
+      }
+    })
+
+    scene.add(ghostguy)
+  })
+
   var animate = function () {
     requestAnimationFrame(animate);
 

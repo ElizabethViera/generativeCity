@@ -182,6 +182,8 @@ async function draw(container: HTMLElement) {
 
     requestAnimationFrame(animate);
     if (animationStop == true) {
+      t += 0.1
+      ghostguy.position.y = 4 + 0.4 * (Math.cos(t))
       ghostguy.setRotationFromEuler(new THREE.Euler(0, Math.PI - .65, 0))
       ghostguy.rotateOnAxis(new THREE.Vector3(1, 0, 0), .4)
       renderer.render(scene, camera);

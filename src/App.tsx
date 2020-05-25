@@ -175,15 +175,27 @@ async function draw(container: HTMLElement) {
 
 
   let t = 0
+  let resets = 0
+  let animationStop = false
 
   var animate = function () {
-    requestAnimationFrame(animate);
 
+    requestAnimationFrame(animate);
+    if (animationStop == true) {
+      ghostguy.setRotationFromEuler(new THREE.Euler(0, Math.PI - .65, 0))
+      ghostguy.rotateOnAxis(new THREE.Vector3(1, 0, 0), .4)
+      renderer.render(scene, camera);
+      return
+    }
     t += 0.1
     ghostguy.position.y = 4 + 0.4 * (Math.cos(t))
     ghostguy.position.z = t
+    if (resets == 3 && t > 15) {
+      animationStop = true
+    }
     ghostguy.setRotationFromEuler(new THREE.Euler(0, Math.PI, 0.04 * Math.cos(t * .8)))
     if (t > 40) {
+      resets += 1
       t = 0
       scene.remove(city)
       city = generateScene()

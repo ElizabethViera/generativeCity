@@ -154,22 +154,42 @@ async function draw(container: HTMLElement) {
     ghost_loader.load('/ghost.obj', resolve);
   })
 
+  const doggo = await new Promise<THREE.Group>((resolve) => {
+    const dog_loader = new OBJLoader()
+    dog_loader.load('/doggo.obj', resolve);
+  })
+
   let objectCount = 0
   ghostguy.traverse((obj) => {
     if (obj instanceof THREE.Mesh) {
       objectCount += 1
       obj.geometry.computeVertexNormals();
-      obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
+      // Cylinder and Defaults
+      obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
       if (objectCount == 3) {
+        // Sheet
         obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
       }
       if (objectCount == 2) {
+        // Sphere (eyes)
         obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
       }
     }
   })
 
+  doggo.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      obj.geometry.computeVertexNormals();
+      obj.material = new THREE.MeshToonMaterial({ color: new THREE.Color(0xD2B48C) })
+    }
+  })
+
+  doggo.scale.x = 0.3
+  doggo.scale.y = 0.3
+  doggo.scale.z = 0.3
+
   scene.add(ghostguy)
+  scene.add(doggo)
   let city = generateScene()
   scene.add(city)
 
@@ -181,6 +201,8 @@ async function draw(container: HTMLElement) {
   var animate = function () {
 
     requestAnimationFrame(animate);
+    doggo.position.y = 4
+    doggo.position.z = 7
     if (animationStop == true) {
       t += 0.05
       ghostguy.position.y = 4 + 0.4 * (Math.cos(t))
@@ -196,6 +218,7 @@ async function draw(container: HTMLElement) {
       animationStop = true
     }
     ghostguy.setRotationFromEuler(new THREE.Euler(0, Math.PI, 0.04 * Math.cos(t * .8)))
+    doggo.setRotationFromEuler(new THREE.Euler(0, Math.PI, 0.04 * Math.cos(t * .8)))
     if (t > 40) {
       resets += 1
       t = 0

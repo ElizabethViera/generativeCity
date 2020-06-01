@@ -161,9 +161,9 @@ function generateForestScene() {
           const rb = randBetween(200, 230);
           return "rgb(" + rr + ", " + rg + ", " + rb + ")"
         } else {
-          const rr = randBetween(70, 100)
-          const rg = randBetween(200, 225)
-          const rb = randBetween(90, 115)
+          const rr = randBetween(190, 210)
+          const rg = randBetween(235, 255)
+          const rb = randBetween(215, 225)
           return "rgb(" + rr + ", " + rg + ", " + rb + ")"
         }
       }

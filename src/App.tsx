@@ -14,7 +14,8 @@ function randChoose<T>(options: Array<T>): T {
   const list = [...options];
   return list[Math.floor(Math.random() * list.length)];
 }
-function generateFallingPetals() {
+
+function petalGeometry() {
   const geometry = new THREE.Geometry()
   const size = .1;
   const index = geometry.vertices.length;
@@ -42,31 +43,32 @@ function generateFallingPetals() {
   geometry.vertices.push(...vertices);
   geometry.faces.push(...faces);
   geometry.computeFaceNormals()
+  return geometry
+}
+function generateFallingPetals() {
+  const geometry = petalGeometry()
   // return new THREE.Mesh(geometry, material)
 
   const petalGroup = new THREE.Group()
   const petalMeshes: THREE.Mesh[] = []
-  for (let x = -17; x <= -3; x++) {
-    for (let z = 6; z <= 22; z++) {
-      const randomTree = randBetween(0, 90);
+  for (let n = 0; n < 400; n++) {
+    let x = randBetween(-17, -3)
+    let z = randBetween(6, 22)
 
-      // draw petals
-      if (randomTree > 12 && randomTree < 60) {
-        const treeTopHeight = randBetween(0, 8)
-        const pr = 255;
-        const pg = randBetween(150, 200);
-        const pb = randBetween(240, 250);
-        const pinkColor = "rgb(" + pr + ", " + pg + ", " + pb + ")"
+    const treeTopHeight = randBetween(0, 8)
+    const pr = 255;
+    const pg = randBetween(150, 200);
+    const pb = randBetween(240, 250);
+    const pinkColor = "rgb(" + pr + ", " + pg + ", " + pb + ")"
 
-        const material = new THREE.MeshLambertMaterial({ color: pinkColor, vertexColors: true });
-        const mesh = new THREE.Mesh(geometry, material)
-        mesh.position.set(x, treeTopHeight, z);
-        petalGroup.add(mesh)
-        petalMeshes.push(mesh)
-      }
-
-    }
+    const material = new THREE.MeshLambertMaterial({ color: pinkColor, vertexColors: true });
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.position.set(x, treeTopHeight, z);
+    petalGroup.add(mesh)
+    petalMeshes.push(mesh)
   }
+
+
 
   return {
     group: petalGroup,
@@ -83,6 +85,95 @@ function generateFallingPetals() {
     }
   }
 
+
+}
+
+function generateRiverScene() {
+  const geometry = new THREE.Geometry()
+  function addCube(pos: THREE.Vector3, { top = new THREE.Color("rgb(255,255,255)"), left = new THREE.Color("rgb(169, 169, 169)"), right = new THREE.Color("rgb(90,0,90)"), top2 }: Partial<Record<"top" | "left" | "right" | "top2", THREE.Color>>) {
+    const size = .5;
+    const index = geometry.vertices.length;
+    const vertices = [pos]
+      .flatMap(p => [new THREE.Vector3(size, 0, 0).add(p), new THREE.Vector3(-size, 0, 0).add(p)])
+      .flatMap(p => [new THREE.Vector3(0, size, 0).add(p), new THREE.Vector3(0, -size, 0).add(p)])
+      .flatMap(p => [new THREE.Vector3(0, 0, size).add(p), new THREE.Vector3(0, 0, -size).add(p)])
+
+
+
+
+
+    const faces = [
+      // top face
+      new THREE.Face3(index + 4, index + 1, index + 5, undefined, top),
+      new THREE.Face3(index + 4, index, index + 1, undefined, top2 || top),
+
+      // bottom face
+      new THREE.Face3(index + 3, index + 2, index + 6, undefined, top),
+      new THREE.Face3(index + 3, index + 6, index + 7, undefined, top2 || top),
+
+      // back right face
+      new THREE.Face3(index + 3, index + 7, index + 5, undefined, top),
+      new THREE.Face3(index + 3, index + 5, index + 1, undefined, top2 || top),
+
+      // back left face
+      new THREE.Face3(index + 3, index + 1, index, undefined, top),
+      new THREE.Face3(index + 3, index + 0, index + 2, undefined, top2 || top),
+
+      // right face
+      new THREE.Face3(index + 4, index + 2, index, undefined, right),
+      new THREE.Face3(index + 4, index + 6, index + 2, undefined, right),
+
+      // left face
+      new THREE.Face3(index + 4, index + 7, index + 6, undefined, left),
+      new THREE.Face3(index + 4, index + 5, index + 7, undefined, left),
+    ]
+
+    geometry.vertices.push(...vertices);
+    geometry.faces.push(...faces);
+
+  }
+
+  // ground
+  for (let x = -35; x <= 40; x++) {
+    for (let z = -25; z <= 40; z++) {
+      const rr = randBetween(50, 80)
+      const rg = randBetween(50, 90)
+      const rb = randBetween(210, 225)
+      const color = "rgb(" + rr + ", " + rg + ", " + rb + ")"
+
+      addCube(new THREE.Vector3(x, 0, z), { top: new THREE.Color(color) });
+    }
+  }
+
+  // corals
+  const colors = ['#F56853', '#FF575F', '#FA57FF', '#C453F5', '#E85BA8', '#AA20F6', '#D9F620', '#31A7D6', '#20F692']
+  const dirs = [0, 0, 0, 0, 0, 1, -1]
+  const ydirs = [0, -1, 1, 1, 1]
+  let corals: [number, number][] = []
+  while (corals.length < 45) {
+    let x = randBetween(-15, 0)
+    let z = randBetween(-5, 35)
+    if (corals.find(([cx, cz]) => x == cx && z == cz)) {
+      continue
+    } else {
+      corals.push([x, z]);
+      // draw coral at this location
+      const color = randChoose(colors)
+      for (let y = 1; y <= 8 || y < -1; y += 0) {
+        if (y > 0) {
+          addCube(new THREE.Vector3(x, y, z), { top: new THREE.Color(color), right: new THREE.Color(color), left: new THREE.Color(color) })
+        }
+        x += randChoose(dirs)
+        z += randChoose(dirs)
+        y += randChoose(ydirs)
+      }
+    }
+  }
+
+
+  geometry.computeFaceNormals()
+  const material = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
+  return new THREE.Mesh(geometry, material)
 
 }
 function generateForestScene() {
@@ -119,37 +210,7 @@ function generateForestScene() {
 
   }
 
-  function addRainCube(pos: THREE.Vector3, { top = new THREE.Color("rgb(255,255,255)"), left = new THREE.Color("rgb(169, 169, 169)"), right = new THREE.Color("rgb(90,0,90)"), top2 }: Partial<Record<"top" | "left" | "right" | "top2", THREE.Color>>) {
-    const size = .1;
-    const index = geometry.vertices.length;
-    const vertices = [pos]
-      .flatMap(p => [new THREE.Vector3(size, 0, 0).add(p), new THREE.Vector3(-size, 0, 0).add(p)])
-      .flatMap(p => [new THREE.Vector3(0, size, 0).add(p), new THREE.Vector3(0, -size, 0).add(p)])
-      .flatMap(p => [new THREE.Vector3(0, 0, size).add(p), new THREE.Vector3(0, 0, -size).add(p)])
 
-
-
-
-
-    const faces = [
-      // top face
-      new THREE.Face3(index + 4, index + 1, index + 5, undefined, top),
-      new THREE.Face3(index + 4, index, index + 1, undefined, top2 || top),
-
-
-      // right face
-      new THREE.Face3(index + 4, index + 2, index, undefined, right),
-      new THREE.Face3(index + 4, index + 6, index + 2, undefined, right),
-
-      // left face
-      new THREE.Face3(index + 4, index + 7, index + 6, undefined, left),
-      new THREE.Face3(index + 4, index + 5, index + 7, undefined, left),
-    ]
-
-    geometry.vertices.push(...vertices);
-    geometry.faces.push(...faces);
-
-  }
   // ground
   for (let x = -40; x <= 25; x++) {
     for (let z = -25; z <= 45; z++) {
@@ -252,7 +313,7 @@ function generateScene() {
 
 
   for (let x = -35; x <= 30; x++) {
-    for (let z = -25; z <= 35; z++) {
+    for (let z = -25; z <= 50; z++) {
       const rr = randBetween(210, 225)
       const rg = randBetween(210, 225)
       const rb = randBetween(210, 225)
@@ -324,12 +385,23 @@ async function draw(container: HTMLElement) {
 
   var light = new THREE.AmbientLight(new Color("#888"))
   var dirLight = new THREE.DirectionalLight(new Color("#AAA"))
-  dirLight.position.set(0.5, 1, 1)
+  dirLight.position.set(45, 80, 60)
+  dirLight.castShadow = true
   scene.add(light, dirLight)
   var renderer = new THREE.WebGLRenderer();
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.VSMShadowMap;
   renderer.setSize(window.innerWidth, window.innerHeight);
   document.body.appendChild(renderer.domElement);
 
+  dirLight.shadow.mapSize.width = 2048;  // default
+  dirLight.shadow.mapSize.height = 2048; // default
+  dirLight.shadow.camera.near = 45;    // default
+  dirLight.shadow.camera.far = 200;     // default
+  dirLight.shadow.camera.left = -100;
+  dirLight.shadow.camera.right = 100;
+  dirLight.shadow.camera.top = 100;
+  dirLight.shadow.camera.bottom = -100;
 
 
 
@@ -384,12 +456,20 @@ async function draw(container: HTMLElement) {
   doggo.scale.x = 0.3
   doggo.scale.y = 0.3
   doggo.scale.z = 0.3
-
+  // canyon scene
   // scene.add(ghostguy)
   // scene.add(doggo)
-  let forest = generateForestScene()
-  let { group: petalGroup, update: updatePetals } = generateFallingPetals()
-  scene.add(forest, petalGroup)
+
+  //forest scene
+  //let forest = generateForestScene()
+  //let { group: petalGroup, update: updatePetals } = generateFallingPetals()
+  //scene.add(forest, petalGroup)
+
+  // river scene
+  let river = generateRiverScene()
+  river.castShadow = true
+  river.receiveShadow = true
+  scene.add(river)
 
 
   let t = 0
@@ -398,8 +478,10 @@ async function draw(container: HTMLElement) {
 
   var animate = function () {
     requestAnimationFrame(animate);
-    updatePetals()
-    // requestAnimationFrame(animate);
+    // forest scene
+    //updatePetals()
+
+    // canyon scene
     // doggo.position.y = 4
     // doggo.position.z = 7
     // if (animationStop == true) {

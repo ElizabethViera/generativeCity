@@ -15,6 +15,104 @@ function randChoose<T>(options: Array<T>): T {
   return list[Math.floor(Math.random() * list.length)];
 }
 
+function generateDuckScene() {
+  const geometry = new THREE.Geometry()
+  function addCube(pos: THREE.Vector3, { top = new THREE.Color("rgb(255,255,255)"), left = new THREE.Color("rgb(169, 169, 169)"), right = new THREE.Color("rgb(90,0,90)"), top2 }: Partial<Record<"top" | "left" | "right" | "top2", THREE.Color>>) {
+    const size = .5;
+    const index = geometry.vertices.length;
+    const vertices = [pos]
+      .flatMap(p => [new THREE.Vector3(size, 0, 0).add(p), new THREE.Vector3(-size, 0, 0).add(p)])
+      .flatMap(p => [new THREE.Vector3(0, size, 0).add(p), new THREE.Vector3(0, -size, 0).add(p)])
+      .flatMap(p => [new THREE.Vector3(0, 0, size).add(p), new THREE.Vector3(0, 0, -size).add(p)])
+
+
+
+
+
+    const faces = [
+      // top face
+      new THREE.Face3(index + 4, index + 1, index + 5, undefined, top),
+      new THREE.Face3(index + 4, index, index + 1, undefined, top2 || top),
+
+
+      // right face
+      new THREE.Face3(index + 4, index + 2, index, undefined, right),
+      new THREE.Face3(index + 4, index + 6, index + 2, undefined, right),
+
+      // left face
+      new THREE.Face3(index + 4, index + 7, index + 6, undefined, left),
+      new THREE.Face3(index + 4, index + 5, index + 7, undefined, left),
+    ]
+
+    geometry.vertices.push(...vertices);
+    geometry.faces.push(...faces);
+
+  }
+
+  function addDuckBox(pos: THREE.Vector3, { box = new THREE.Color("rgb(255,255,255)"), bottom = new THREE.Color("rgb(255, 255, 255") }) {
+    const size = 8;
+    const index = geometry.vertices.length;
+    const vertices = [pos]
+      .flatMap(p => [new THREE.Vector3(size, 0, 0).add(p), new THREE.Vector3(-size, 0, 0).add(p)])
+      .flatMap(p => [new THREE.Vector3(0, size, 0).add(p), new THREE.Vector3(0, -size, 0).add(p)])
+      .flatMap(p => [new THREE.Vector3(0, 0, size).add(p), new THREE.Vector3(0, 0, -size).add(p)])
+
+
+
+
+
+    const faces = [
+      // top face
+      new THREE.Face3(index + 4, index + 1, index + 5, undefined, box),
+      new THREE.Face3(index + 4, index, index + 1, undefined, box),
+
+      // bottom face
+      new THREE.Face3(index + 3, index + 6, index + 2, undefined, bottom),
+      new THREE.Face3(index + 3, index + 7, index + 6, undefined, bottom),
+
+      // back right face
+      new THREE.Face3(index + 3, index + 7, index + 5, undefined, box),
+      new THREE.Face3(index + 3, index + 5, index + 1, undefined, box),
+
+      // back left face
+      new THREE.Face3(index + 3, index, index + 1, undefined, box),
+      new THREE.Face3(index + 3, index + 2, index + 0, undefined, box),
+
+
+
+      // left face
+      new THREE.Face3(index + 4, index + 7, index + 6, undefined, box),
+      new THREE.Face3(index + 4, index + 5, index + 7, undefined, box),
+    ]
+
+    geometry.vertices.push(...vertices);
+    geometry.faces.push(...faces);
+
+  }
+
+  // ground
+  for (let x = -40; x <= 25; x++) {
+    for (let z = -25; z <= 45; z++) {
+      const genColor = () => {
+        const rr = randBetween(5, 15)
+        const rg = randBetween(100, 110)
+        const rb = randBetween(10, 20)
+        return "rgb(" + rr + ", " + rg + ", " + rb + ")"
+      }
+      const color = genColor()
+      addCube(new THREE.Vector3(x, 0, z), { top: new THREE.Color(color) });
+    }
+  }
+
+  addDuckBox(new THREE.Vector3(-4, 9, 8), { box: new THREE.Color(0x92672C), bottom: new THREE.Color(0x004400) })
+
+  geometry.computeFaceNormals()
+  const material = new THREE.MeshLambertMaterial({ color: 0xffffff, vertexColors: true });
+  return new THREE.Mesh(geometry, material)
+
+}
+
+
 function petalGeometry() {
   const geometry = new THREE.Geometry()
   const size = .1;
@@ -67,6 +165,44 @@ function generateFallingPetals() {
     petalGroup.add(mesh)
     petalMeshes.push(mesh)
   }
+}
+
+function generateFallingRain() {
+  function isRainInBox(p: THREE.Vector3) {
+    // box center is at -4, 9, 8, height is 8
+    const distance = Math.max(Math.abs(p.x + 4), Math.abs(p.y - 9), Math.abs(p.z - 8))
+    return distance <= 8
+  }
+  function generateRainDropCoords() {
+    // box center is at -4, 9, 8
+    // box is height 8
+    let x = randBetween(-27, 27)
+    let z = randBetween(-10, 30)
+
+    return { x, z }
+  }
+  const geometry = petalGeometry()
+  // return new THREE.Mesh(geometry, material)
+
+  const petalGroup = new THREE.Group()
+  const petalMeshes: THREE.Mesh[] = []
+  for (let n = 0; n < 400; n++) {
+    const { x, z } = generateRainDropCoords()
+
+
+    const treeTopHeight = randBetween(0, 60)
+    const br = 0;
+    const bg = randBetween(50, 60);
+    const bb = randBetween(240, 255);
+    const blueColor = "rgb(" + br + ", " + bg + ", " + bb + ")"
+
+    const material = new THREE.MeshLambertMaterial({ color: blueColor, vertexColors: true });
+    const mesh = new THREE.Mesh(geometry, material)
+    mesh.position.set(x, treeTopHeight, z);
+    petalGroup.add(mesh)
+    petalMeshes.push(mesh)
+  }
+
 
 
 
@@ -74,12 +210,12 @@ function generateFallingPetals() {
     group: petalGroup,
     update: () => {
       petalMeshes.forEach((m) => {
-        m.position.y -= .008
-        m.position.x = m.position.x + .008 * Math.cos(m.position.y)
-        if (m.position.y < 0) {
-          m.position.y = 8
-          m.position.x = randBetween(-17, -3)
-          m.position.z = randBetween(6, 22)
+
+        m.position.y -= .18
+        if (m.position.y < 0 || isRainInBox(m.position)) {
+          m.position.y = 60
+          m.position.x = randBetween(-27, 27)
+          m.position.z = randBetween(-10, 30)
         }
       })
     }
@@ -417,46 +553,69 @@ async function draw(container: HTMLElement) {
 
 
 
+  // load ghost and dog
+  // const ghostguy = await new Promise<THREE.Group>((resolve) => {
+  //   const ghost_loader = new OBJLoader()
+  //   ghost_loader.load('/ghost.obj', resolve);
+  // })
 
-  const ghostguy = await new Promise<THREE.Group>((resolve) => {
-    const ghost_loader = new OBJLoader()
-    ghost_loader.load('/ghost.obj', resolve);
+  // const doggo = await new Promise<THREE.Group>((resolve) => {
+  //   const dog_loader = new OBJLoader()
+  //   dog_loader.load('/doggo.obj', resolve);
+  // })
+
+  // load ducky
+  const ducky = await new Promise<THREE.Group>((resolve) => {
+    const ducky_loader = new OBJLoader()
+    ducky_loader.load('/ducky.obj', resolve);
   })
 
-  const doggo = await new Promise<THREE.Group>((resolve) => {
-    const dog_loader = new OBJLoader()
-    dog_loader.load('/doggo.obj', resolve);
-  })
 
-  let objectCount = 0
-  ghostguy.traverse((obj) => {
+  ducky.scale.x = 1.3
+  ducky.scale.y = 1.3
+  ducky.scale.z = 1.3
+  ducky.position.x = -4
+  ducky.position.z = 12
+  ducky.position.y = 4
+  ducky.rotateOnAxis(new THREE.Vector3(0, 1, 0), -.7)
+
+  ducky.traverse((obj) => {
     if (obj instanceof THREE.Mesh) {
-      objectCount += 1
       obj.geometry.computeVertexNormals();
-      // Cylinder and Defaults
-      obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
-      if (objectCount == 3) {
-        // Sheet
-        obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
-      }
-      if (objectCount == 2) {
-        // Sphere (eyes)
-        obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
-      }
+      obj.material = new THREE.MeshToonMaterial({ color: new THREE.Color(0x20292f) })
     }
   })
 
-  doggo.traverse((obj) => {
-    if (obj instanceof THREE.Mesh) {
-      obj.geometry.computeVertexNormals();
-      obj.material = new THREE.MeshToonMaterial({ color: new THREE.Color(0xADA09C) })
-    }
-  })
+  // let objectCount = 0
+  // ghostguy.traverse((obj) => {
+  //   if (obj instanceof THREE.Mesh) {
+  //     objectCount += 1
+  //     obj.geometry.computeVertexNormals();
+  //     // Cylinder and Defaults
+  //     obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
+  //     if (objectCount == 3) {
+  //       // Sheet
+  //       obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0x550044) });
+  //     }
+  //     if (objectCount == 2) {
+  //       // Sphere (eyes)
+  //       obj.material = new THREE.MeshLambertMaterial({ color: new THREE.Color(0xFFFFFF) });
+  //     }
+  //   }
+  // })
 
-  doggo.scale.x = 0.3
-  doggo.scale.y = 0.3
-  doggo.scale.z = 0.3
-  // canyon scene
+  // doggo.traverse((obj) => {
+  //   if (obj instanceof THREE.Mesh) {
+  //     obj.geometry.computeVertexNormals();
+  //     obj.material = new THREE.MeshToonMaterial({ color: new THREE.Color(0xADA09C) })
+  //   }
+  // })
+
+  // doggo.scale.x = 0.3
+  // doggo.scale.y = 0.3
+  // doggo.scale.z = 0.3
+
+  // // canyon scene
   // scene.add(ghostguy)
   // scene.add(doggo)
 
@@ -465,22 +624,29 @@ async function draw(container: HTMLElement) {
   //let { group: petalGroup, update: updatePetals } = generateFallingPetals()
   //scene.add(forest, petalGroup)
 
-  // river scene
-  let river = generateRiverScene()
-  river.castShadow = true
-  river.receiveShadow = true
-  scene.add(river)
+  // // river scene
+  // let river = generateRiverScene()
+  // river.castShadow = true
+  // river.receiveShadow = true
+  // scene.add(river)
 
+  // duck scene
+  let outside = generateDuckScene()
+  scene.add(outside)
+  scene.add(ducky)
+  let { group: petalGroup, update: updatePetals } = generateFallingRain()
+  scene.add(petalGroup)
 
   let t = 0
-  let resets = 0
-  let animationStop = false
+  // let resets = 0
+  // let animationStop = false
 
   var animate = function () {
     requestAnimationFrame(animate);
     // forest scene
-    //updatePetals()
-
+    updatePetals()
+    ducky.setRotationFromEuler(new THREE.Euler(0.04 * Math.cos(t * .8), -Math.PI / 4, 0.02 * Math.cos(t * .2)))
+    t += 0.05
     // canyon scene
     // doggo.position.y = 4
     // doggo.position.z = 7

@@ -466,7 +466,7 @@ function generateScene() {
     for (let x = cx - size; x <= cx + size; x++) {
       for (let z = cz - size; z <= cz + size; z++) {
         for (let y = 1; y <= 2 * size + 1; y++) {
-          if (((x <= 3 && x >= -4) || (x === cx || z === cz)) && y < size + 1) {
+          if ((x <= 4 && x >= -4) || ((x === cx || z === cz) && y <= size + 1)) {
             continue;
           }
           const rr = randBetween(230, 245) + y
